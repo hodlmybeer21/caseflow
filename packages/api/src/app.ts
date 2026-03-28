@@ -94,9 +94,16 @@ app.use('/api', apiRouter);
 app.use(express.static(STATIC_PATH));
 
 // SPA fallback — serve React app for all non-API, non-static routes
-const indexFile = path.join(STATIC_PATH, 'index.html');
-app.get('/{*path}', (req, res) => {
-  // Skip API routes — they are handled by the apiRouter above
+const indexFile = String(path.join(STATIC_PATH, 'index.html'));
+app.get('/', (_req: any, res: any) => {
+  if (fs.existsSync(indexFile)) {
+    res.setHeader('Content-Type', 'text/html');
+    fs.createReadStream(indexFile).pipe(res);
+  } else {
+    res.status(404).json({ error: 'static files not configured' });
+  }
+});
+app.get('/{*path}', (req: any, res: any) => {
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ error: 'API route not found' });
   }
