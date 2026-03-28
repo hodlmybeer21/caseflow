@@ -1,0 +1,19 @@
+# render.yaml — Render Blueprint
+# Docs: https://render.com/docs/blueprints
+
+services:
+  - type: web
+    name: caseflow
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: echo Using pre-built artifacts
+    startCommand: node packages/api/dist/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_yxvYdq53bAOh@ep-silent-tree-an3h4ihl-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require
+      - key: SESSION_SECRET
+        generateValue: 64
+      - key: NODE_ENV
+        value: production
