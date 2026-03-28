@@ -37,9 +37,9 @@ app.get('/health', (_req, res) => {
 app.use('/api', apiRouter);
 
 // Static files from absolute path (process.cwd() broken in esbuild bundle)
-app.use(express.static('/app/artifacts/client/dist/public'));
+app.use(express.static('/app/packages/client/dist/public'));
 
 // SPA fallback - catchall for non-API routes
 app.use((_req, res) => {
-  res.sendFile('/app/artifacts/client/dist/public/index.html');
+  res.sendFile('/app/packages/client/dist/public/index.html');
 });
