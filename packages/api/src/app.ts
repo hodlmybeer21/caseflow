@@ -8,6 +8,8 @@ import { apiRouter } from './routes/index.js';
 
 export const app = express();
 
+const STATIC_PATH = '/app/packages/client/dist/public';
+
 // CORS
 app.use(cors({ origin: true, credentials: true }));
 
@@ -20,13 +22,13 @@ app.use(cookieParser());
 
 // Session
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'caseflow-dev-secret-change-in-production',
+  secret: process.env.SESSION_SECRET || 'caseflow-dev-secret',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // set true in production with HTTPS
+    secure: false,
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    maxAge: 24 * 60 * 60 * 1000,
   },
 }));
 
@@ -35,36 +37,42 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Diagnostic — check what files exist at the static path
+// Diagnostic endpoint
 app.get('/debug/fs', (_req, res) => {
-  const staticPath = '/app/packages/client/dist/public';
   try {
-    const stat = fs.statSync(staticPath);
-    const files = fs.readdirSync(staticPath);
-    res.json({ path: staticPath, isDirectory: stat.isDirectory(), files });
+    const stat = fs.statSync(STATIC_PATH);
+    const files = fs.readdirSync(STATIC_PATH);
+    res.json({ path: STATIC_PATH, isDirectory: stat.isDirectory(), files });
   } catch (err: any) {
-    res.json({ path: staticPath, error: err.message, code: err.code });
+    res.json({ path: STATIC_PATH, error: err.message, code: err.code });
   }
 });
 
 // Startup diagnostic
-const STATIC_PATH = '/app/packages/client/dist/public';
 try {
   const files = fs.readdirSync(STATIC_PATH);
-  console.log(`[OK] Static files found: ${files.join(', ')}`);
-} catch (err) {
+  console.log(`[OK] Static files at ${STATIC_PATH}: ${files.join(', ')}`);
+} catch (err: any) {
   console.error(`[WARN] Static files not found at ${STATIC_PATH}: ${err.message}`);
 }
 
-// API routes
+// API routes FIRST
 app.use('/api', apiRouter);
 
-// Static files — use path.resolve to avoid esbuild process.cwd() issue
-const STATIC_PATH = '/app/packages/client/dist/public';
+// Static files
 app.use(express.static(STATIC_PATH));
 
-// SPA fallback — serve React app for all non-API routes
-app.get('*', (_req, res) => {
-  const indexPath = path.join(STATIC_PATH, 'index.html');
-  res.sendFile(indexPath);
+// SPA fallback — serve React app for all non-API, non-static routes
+// Use /{*path} Express 5 wildcard syntax (NOT bare "*")
+const indexFile = path.join(STATIC_PATH, 'index.html');
+app.get('/{*path}', (req, res) => {
+  // Skip API routes — they are handled by the apiRouter above
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
+  if (fs.existsSync(indexFile)) {
+    res.sendFile(indexFile);
+  } else {
+    res.status(404).json({ error: 'static files not configured' });
+  }
 });
