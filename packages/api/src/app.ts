@@ -8,7 +8,8 @@ import { apiRouter } from './routes/index.js';
 
 export const app = express();
 
-const STATIC_PATH = '/app/packages/client/dist/public';
+// Use cwd + relative path — Render's cwd is /opt/render/project/src
+const STATIC_PATH = path.join(process.cwd(), 'packages/client/dist/public');
 
 // CORS
 app.use(cors({ origin: true, credentials: true }));
@@ -38,6 +39,8 @@ app.get('/health', (_req, res) => {
 });
 
 // Diagnostic endpoint
+import { createReadStream } from 'fs';
+
 app.get('/debug/fs', (_req, res) => {
   try {
     const stat = fs.statSync(STATIC_PATH);
@@ -51,13 +54,10 @@ app.get('/debug/fs', (_req, res) => {
 // Debug: find where git files actually are
 app.get('/debug/paths', (_req, res) => {
   const candidates = [
+    path.join(process.cwd(), 'packages/client/dist/public'),
+    path.join(process.cwd(), 'artifacts/client/dist/public'),
     '/app/packages/client/dist/public',
     '/app/artifacts/client/dist/public',
-    '/app/packages/client/dist',
-    '/app/artifacts/client/dist',
-    'packages/client/dist/public',
-    'artifacts/client/dist/public',
-    '/home/render/.render/packages/client/dist/public',
   ];
   const results = {};
   for (const p of candidates) {
@@ -94,7 +94,6 @@ app.use('/api', apiRouter);
 app.use(express.static(STATIC_PATH));
 
 // SPA fallback — serve React app for all non-API, non-static routes
-// Use /{*path} Express 5 wildcard syntax (NOT bare "*")
 const indexFile = path.join(STATIC_PATH, 'index.html');
 app.get('/{*path}', (req, res) => {
   // Skip API routes — they are handled by the apiRouter above
@@ -102,7 +101,8 @@ app.get('/{*path}', (req, res) => {
     return res.status(404).json({ error: 'API route not found' });
   }
   if (fs.existsSync(indexFile)) {
-    res.sendFile(indexFile);
+    res.setHeader('Content-Type', 'text/html');
+    fs.createReadStream(indexFile).pipe(res);
   } else {
     res.status(404).json({ error: 'static files not configured' });
   }
