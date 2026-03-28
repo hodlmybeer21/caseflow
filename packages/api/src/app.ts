@@ -47,6 +47,15 @@ app.get('/debug/fs', (_req, res) => {
   }
 });
 
+// Startup diagnostic
+const STATIC_PATH = '/app/packages/client/dist/public';
+try {
+  const files = fs.readdirSync(STATIC_PATH);
+  console.log(`[OK] Static files found: ${files.join(', ')}`);
+} catch (err) {
+  console.error(`[WARN] Static files not found at ${STATIC_PATH}: ${err.message}`);
+}
+
 // API routes
 app.use('/api', apiRouter);
 
