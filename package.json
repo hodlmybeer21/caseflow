@@ -1,0 +1,14 @@
+{
+  "name": "caseflow",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @caseflow/api run dev",
+    "build": "pnpm --filter @caseflow/api run build && pnpm --filter @caseflow/client run build",
+    "build:api": "pnpm --filter @caseflow/api run build",
+    "build:client": "pnpm --filter @caseflow/client run build",
+    "db:push": "pnpm --filter @caseflow/db run push",
+    "db:studio": "pnpm --filter @caseflow/db run studio"
+  }
+}

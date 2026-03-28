@@ -1,0 +1,11 @@
+{
+  "name": "@caseflow/db",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "connection.ts",
+  "types": "schema.ts",
+  "dependencies": {
+    "drizzle-orm": "^0.38.4",
+    "dotenv": "^16.4.5"
+  }
+}
