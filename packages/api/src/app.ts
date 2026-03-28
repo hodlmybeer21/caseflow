@@ -48,6 +48,37 @@ app.get('/debug/fs', (_req, res) => {
   }
 });
 
+// Debug: find where git files actually are
+app.get('/debug/paths', (_req, res) => {
+  const candidates = [
+    '/app/packages/client/dist/public',
+    '/app/artifacts/client/dist/public',
+    '/app/packages/client/dist',
+    '/app/artifacts/client/dist',
+    'packages/client/dist/public',
+    'artifacts/client/dist/public',
+    '/home/render/.render/packages/client/dist/public',
+  ];
+  const results = {};
+  for (const p of candidates) {
+    try {
+      const stat = fs.statSync(p);
+      if (stat.isDirectory()) {
+        results[p] = { exists: true, isDirectory: true, files: fs.readdirSync(p).slice(0, 5) };
+      } else {
+        results[p] = { exists: true, isFile: true };
+      }
+    } catch (err: any) {
+      results[p] = { exists: false, error: err.code };
+    }
+  }
+  // Also show current working directory and /app contents
+  try { results['cwd'] = process.cwd(); } catch(e) { results['cwd'] = 'unavailable'; }
+  try { results['/app'] = fs.readdirSync('/app').slice(0, 10); } catch(e) { results['/app'] = e.code; }
+  try { results['~'] = fs.readdirSync(process.env.HOME || '/').slice(0, 10); } catch(e) { results['~'] = e.code; }
+  res.json(results);
+});
+
 // Startup diagnostic
 try {
   const files = fs.readdirSync(STATIC_PATH);
