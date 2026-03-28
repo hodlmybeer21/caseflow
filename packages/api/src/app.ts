@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'path';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
@@ -36,10 +37,16 @@ app.get('/health', (_req, res) => {
 // API routes
 app.use('/api', apiRouter);
 
-// Static files from absolute path (process.cwd() broken in esbuild bundle)
-app.use(express.static('/app/packages/client/dist/public'));
+// Static files — use path.resolve to avoid esbuild process.cwd() issue
+const STATIC_PATH = '/app/packages/client/dist/public';
+app.use(express.static(STATIC_PATH));
 
-// SPA fallback - catchall for non-API routes
-app.use((_req, res) => {
-  res.sendFile('/app/packages/client/dist/public/index.html');
+// SPA fallback
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(STATIC_PATH, 'index.html'), (err) => {
+    if (err) {
+      console.error('sendFile error:', err.message);
+      res.status(404).json({ error: 'static file not found', path: STATIC_PATH });
+    }
+  });
 });

@@ -10,6 +10,7 @@ import { createServer } from "http";
 
 // src/app.ts
 import express from "express";
+import path from "path";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import session from "express-session";
@@ -1025,9 +1026,15 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 app.use("/api", apiRouter);
-app.use(express.static("/app/packages/client/dist/public"));
-app.use((_req, res) => {
-  res.sendFile("/app/packages/client/dist/public/index.html");
+var STATIC_PATH = "/app/packages/client/dist/public";
+app.use(express.static(STATIC_PATH));
+app.get("*", (_req, res) => {
+  res.sendFile(path.join(STATIC_PATH, "index.html"), (err) => {
+    if (err) {
+      console.error("sendFile error:", err.message);
+      res.status(404).json({ error: "static file not found", path: STATIC_PATH });
+    }
+  });
 });
 
 // src/index.ts
