@@ -4,8 +4,22 @@
   "type": "module",
   "main": "connection.ts",
   "types": "schema.ts",
+  "exports": {
+    ".": "./connection.ts",
+    "./schema": "./schema.ts"
+  },
+  "scripts": {
+    "push": "drizzle-kit push:pg",
+    "studio": "drizzle-kit studio"
+  },
   "dependencies": {
-    "drizzle-orm": "^0.38.4",
-    "dotenv": "^16.4.5"
+    "drizzle-orm": "^0.38.0",
+    "pg": "^8.20.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.30.0",
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.18.0"
   }
 }

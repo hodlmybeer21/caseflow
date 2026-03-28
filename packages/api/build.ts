@@ -17,15 +17,20 @@ await esbuild.build({
   target: 'node20',
   loader: { '.ts': 'ts' },
   external: [
-    '@neondatabase/serverless',
+    'pg',
     'drizzle-orm',
-    'postgres',
+    'drizzle-orm/node-postgres',
     'dotenv',
     'bcryptjs',
     'express',
     'express-session',
     'cookie-parser',
     'cors',
+    'path',
+    'fs',
+    'fs/promises',
+    'stream/promises',
+    'url',
   ],
 });
 

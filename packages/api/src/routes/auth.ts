@@ -7,6 +7,33 @@ import { randomUUID } from 'crypto';
 
 export const authRouter = Router();
 
+// POST /api/auth/seed — create first admin user (no auth required, call once)
+authRouter.post('/seed', async (req, res) => {
+  try {
+    const { username, password, displayName, email } = req.body;
+    if (!username || !password) {
+      res.status(400).json({ error: 'username and password required' });
+      return;
+    }
+    const passwordHash = await hashPassword(password);
+    const [user] = await db.insert(users).values({
+      username,
+      passwordHash,
+      displayName: displayName || username,
+      email: email || `${username}@caseflow.local`,
+      role: 'admin',
+    }).returning();
+    res.json({ message: 'Admin user created', userId: user.id });
+  } catch (err: any) {
+    if (err.code === '23505') {
+      res.status(409).json({ error: 'User already exists' });
+    } else {
+      console.error('Seed error:', err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+});
+
 // POST /login
 authRouter.post('/login', async (req, res) => {
   try {
