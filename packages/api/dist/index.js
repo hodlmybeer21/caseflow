@@ -1029,12 +1029,8 @@ app.use("/api", apiRouter);
 var STATIC_PATH = "/app/packages/client/dist/public";
 app.use(express.static(STATIC_PATH));
 app.get("*", (_req, res) => {
-  res.sendFile(path.join(STATIC_PATH, "index.html"), (err) => {
-    if (err) {
-      console.error("sendFile error:", err.message);
-      res.status(404).json({ error: "static file not found", path: STATIC_PATH });
-    }
-  });
+  const indexPath = path.join(STATIC_PATH, "index.html");
+  res.sendFile(indexPath);
 });
 
 // src/index.ts
