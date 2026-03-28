@@ -884,27 +884,35 @@ var transfersRouter = Router9();
 transfersRouter.use(requireAuth);
 transfersRouter.get("/", async (_req, res) => {
   try {
-    const result = await db.select({
+    const allTransfers = await db.select({
       id: transfers.id,
       fromAccountId: transfers.fromAccountId,
       toAccountId: transfers.toAccountId,
       brandId: transfers.brandId,
       quantity: transfers.quantity,
-      transferredAt: transfers.transferredAt,
-      fromAccount: {
-        id: accountAssets.id,
-        assetType: accountAssets.assetType
-      },
-      toAccount: {
-        id: accountAssets.id,
-        assetType: accountAssets.assetType
-      },
-      brand: {
-        id: brands.id,
-        name: brands.name
-      }
-    }).from(transfers).leftJoin(accountAssets, eq9(transfers.fromAccountId, accountAssets.id)).leftJoin(brands, eq9(transfers.brandId, brands.id));
-    res.json(result);
+      transferredAt: transfers.transferredAt
+    }).from(transfers);
+    const enriched = await Promise.all(
+      allTransfers.map(async (t) => {
+        let fromAccount = null;
+        let toAccount = null;
+        let brand = null;
+        if (t.fromAccountId) {
+          const [fa] = await db.select({ id: accountAssets.id, assetType: accountAssets.assetType }).from(accountAssets).where(eq9(accountAssets.id, t.fromAccountId)).limit(1);
+          fromAccount = fa || null;
+        }
+        if (t.toAccountId) {
+          const [ta] = await db.select({ id: accountAssets.id, assetType: accountAssets.assetType }).from(accountAssets).where(eq9(accountAssets.id, t.toAccountId)).limit(1);
+          toAccount = ta || null;
+        }
+        if (t.brandId) {
+          const [b] = await db.select({ id: brands.id, name: brands.name }).from(brands).where(eq9(brands.id, t.brandId)).limit(1);
+          brand = b || null;
+        }
+        return { ...t, fromAccount, toAccount, brand };
+      })
+    );
+    res.json(enriched);
   } catch (err) {
     console.error("List transfers error:", err);
     res.status(500).json({ error: "Internal server error" });
