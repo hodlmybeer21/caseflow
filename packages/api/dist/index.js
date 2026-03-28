@@ -11,6 +11,7 @@ import { createServer } from "http";
 // src/app.ts
 import express from "express";
 import path from "path";
+import fs from "fs";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import session from "express-session";
@@ -1024,6 +1025,16 @@ app.use(session({
 }));
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
+});
+app.get("/debug/fs", (_req, res) => {
+  const staticPath = "/app/packages/client/dist/public";
+  try {
+    const stat = fs.statSync(staticPath);
+    const files = fs.readdirSync(staticPath);
+    res.json({ path: staticPath, isDirectory: stat.isDirectory(), files });
+  } catch (err) {
+    res.json({ path: staticPath, error: err.message, code: err.code });
+  }
 });
 app.use("/api", apiRouter);
 var STATIC_PATH = "/app/packages/client/dist/public";
